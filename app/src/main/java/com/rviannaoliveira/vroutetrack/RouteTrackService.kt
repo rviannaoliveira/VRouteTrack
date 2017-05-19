@@ -11,11 +11,7 @@ import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.LocationListener
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
-
-
-
-
-
+import com.google.android.gms.maps.model.LatLng
 
 
 /**
@@ -27,7 +23,6 @@ class RouteTrackService : Service(), GoogleApiClient.ConnectionCallbacks, Google
     private lateinit var locationRequest: LocationRequest
     private val UPDATE_INTERVAL_IN_MILLISECONDS: Long = 0
     private val FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS = UPDATE_INTERVAL_IN_MILLISECONDS / 2
-    private val fusedLocationProviderApi = LocationServices.FusedLocationApi
 
     override fun onCreate() {
         super.onCreate()
@@ -69,10 +64,15 @@ class RouteTrackService : Service(), GoogleApiClient.ConnectionCallbacks, Google
         lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApi)
         Log.d(">>>>>> latitude ", lastLocation.latitude.toString())
         Log.d(">>>>>> longitude ", lastLocation.longitude.toString())
+
+        val register = RegisterTrack()
+        register.latitude = lastLocation.latitude
+        register.longitude = lastLocation.longitude
+        register.address = RegisterUtil.getAddressLabel(this, LatLng(lastLocation.latitude,lastLocation.longitude))
+        RepositoryRealm.insert(register)
     }
 
     override fun onConnectionSuspended(p0: Int) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     private fun startLocationUpdates() {
@@ -93,6 +93,12 @@ class RouteTrackService : Service(), GoogleApiClient.ConnectionCallbacks, Google
         if (location.hasAccuracy() && location.accuracy <= suitableMeter) {
             Log.d(">>>>>> latitude ", location.latitude.toString())
             Log.d(">>>>>> longitude ", location.longitude.toString())
+
+            val register = RegisterTrack()
+            register.latitude = location.latitude
+            register.longitude = location.longitude
+            register.address = RegisterUtil.getAddressLabel(this, LatLng(location.latitude,location.longitude))
+            RepositoryRealm.insert(register)
         }
     }
 }
