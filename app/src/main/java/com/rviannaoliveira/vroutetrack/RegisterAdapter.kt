@@ -1,7 +1,6 @@
 package com.rviannaoliveira.vroutetrack
 
 import android.support.v7.widget.RecyclerView
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,6 +19,7 @@ class RegisterAdapter(private val registers: ArrayList<RegisterTrack>) : Recycle
             val register = registers[position]
             holder.address.text = register.address
             holder.id.text = register.id.toString()
+            holder.time.text = register.getTimeFormat()
         }
     }
 
@@ -32,5 +32,6 @@ class RegisterAdapter(private val registers: ArrayList<RegisterTrack>) : Recycle
     inner class RegisterViewHolder(itemView : View) : RecyclerView.ViewHolder(itemView){
         var id = itemView.findViewById(R.id.id) as TextView
         var address = itemView.findViewById(R.id.address) as TextView
+        var time = itemView.findViewById(R.id.time_register) as TextView
     }
 }
