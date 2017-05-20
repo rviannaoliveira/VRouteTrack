@@ -5,7 +5,6 @@ import android.content.Intent
 import android.location.Location
 import android.os.Bundle
 import android.os.IBinder
-import android.util.Log
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.LocationListener
@@ -21,8 +20,9 @@ class RouteTrackService : Service(), GoogleApiClient.ConnectionCallbacks, Google
     private lateinit var googleApi: GoogleApiClient
     private lateinit var lastLocation: Location
     private lateinit var locationRequest: LocationRequest
-    private val UPDATE_INTERVAL_IN_MILLISECONDS: Long = 0
+    private val UPDATE_INTERVAL_IN_MILLISECONDS: Long = 10 * 1000 * 60
     private val FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS = UPDATE_INTERVAL_IN_MILLISECONDS / 2
+    private val DISPLACEMENT_DISTANCE = 100f
 
     override fun onCreate() {
         super.onCreate()
@@ -62,12 +62,11 @@ class RouteTrackService : Service(), GoogleApiClient.ConnectionCallbacks, Google
     override fun onConnected(p0: Bundle?) {
         startLocationUpdates()
         lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApi)
-        Log.d(">>>>>> latitude ", lastLocation.latitude.toString())
-        Log.d(">>>>>> longitude ", lastLocation.longitude.toString())
 
         val register = RegisterTrack()
         register.latitude = lastLocation.latitude
         register.longitude = lastLocation.longitude
+        register.timeStamp = System.currentTimeMillis()
         register.address = RegisterUtil.getAddressLabel(this, LatLng(lastLocation.latitude,lastLocation.longitude))
         RepositoryRealm.insert(register)
     }
@@ -85,14 +84,13 @@ class RouteTrackService : Service(), GoogleApiClient.ConnectionCallbacks, Google
         locationRequest = LocationRequest()
         locationRequest.interval = UPDATE_INTERVAL_IN_MILLISECONDS
         locationRequest.fastestInterval = FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS
-        locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        locationRequest.smallestDisplacement = DISPLACEMENT_DISTANCE
+        locationRequest.priority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
     }
 
     override fun onLocationChanged(location: Location) {
         val suitableMeter = 20
         if (location.hasAccuracy() && location.accuracy <= suitableMeter) {
-            Log.d(">>>>>> latitude ", location.latitude.toString())
-            Log.d(">>>>>> longitude ", location.longitude.toString())
 
             val register = RegisterTrack()
             register.latitude = location.latitude

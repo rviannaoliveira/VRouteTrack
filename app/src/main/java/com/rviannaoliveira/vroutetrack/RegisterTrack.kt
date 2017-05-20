@@ -10,7 +10,8 @@ open class RegisterTrack : RealmObject() {
     @PrimaryKey
     open var id: Int? = null
     open var address: String? = null
-    open var latitude: Double = 0.0
-    open var longitude: Double = 0.0
+    open var latitude: Double? = null
+    open var longitude: Double? = null
+    open var timeStamp : Long? = null
 
 }

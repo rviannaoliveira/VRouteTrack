@@ -19,6 +19,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 
@@ -64,9 +65,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
     private fun loadView() {
         registers.addAll(RepositoryRealm.getAllRegister())
         recyclerView = findViewById(R.id.registers) as RecyclerView
-        recyclerView.setHasFixedSize(true)
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = RegisterAdapter(registers)
+        recyclerView.setHasFixedSize(true)
 
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
@@ -86,9 +87,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
         map = googleMap
 
         registers.forEach({ item ->
-            map.addMarker(MarkerOptions().position(LatLng(item.latitude,item.longitude)))
+            map.addMarker(MarkerOptions().position(LatLng(item.latitude!!, item.longitude!!)))
         })
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(registers.last().latitude,registers.last().longitude),11f))
+        if(registers.isNotEmpty()){
+            map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(registers.last().latitude!!, registers.last().longitude!!),11f))
+        }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -110,8 +113,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
             return
         }
         val currentLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient)
+
         if(currentLocation != null){
-            map.addMarker(MarkerOptions().position(LatLng(currentLocation.latitude,currentLocation.longitude)))
+            val latLng = LatLng(currentLocation.latitude, currentLocation.longitude)
+            map.addMarker(MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)))
+            map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng,11f))
+
         }
     }
 
