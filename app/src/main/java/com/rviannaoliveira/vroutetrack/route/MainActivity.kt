@@ -1,8 +1,9 @@
-package com.rviannaoliveira.vroutetrack
+package com.rviannaoliveira.vroutetrack.route
 
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Build
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
@@ -22,34 +23,31 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.rviannaoliveira.vroutetrack.R
+import com.rviannaoliveira.vroutetrack.model.RegisterTrack
+import com.rviannaoliveira.vroutetrack.service.RouteTrackService
 
 
-
-class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, RouteView{
     private lateinit var map: GoogleMap
     private lateinit var recyclerView : RecyclerView
     private val PERMISSION = 123
     private lateinit var googleApiClient : GoogleApiClient
+    private lateinit var registerAdapter : RegisterAdapter
     private var registers = ArrayList<RegisterTrack>()
+    private val routePresenter : RoutePresenter = RoutePresenterImpl(this)
+    private lateinit var currentLocation : Location
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        loadView()
-
 
         if (Build.VERSION.SDK_INT >= 23 &&
                 ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), PERMISSION)
         }
-
-
-        googleApiClient = GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build()
+        routePresenter.init()
     }
 
     override fun onStart() {
@@ -62,24 +60,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
         super.onStop()
     }
 
-    private fun loadView() {
-        registers.addAll(RepositoryRealm.getAllRegister())
-        recyclerView = findViewById(R.id.registers) as RecyclerView
-        recyclerView.layoutManager = LinearLayoutManager(this)
-        recyclerView.adapter = RegisterAdapter(registers)
-        recyclerView.setHasFixedSize(true)
-
-        val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
-        mapFragment.getMapAsync(this)
-    }
-
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_main,menu)
         return super.onCreateOptionsMenu(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-        startService(Intent(this,RouteTrackService::class.java))
+        if(item?.itemId == R.id.refresh){
+            routePresenter.refreshData()
+        }else{
+            startService(Intent(this, RouteTrackService::class.java))
+        }
         return super.onOptionsItemSelected(item)
     }
 
@@ -101,7 +92,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
                     .checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 return
             }
-
+            updateCurrentLocation()
         }
     }
 
@@ -112,17 +103,44 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return
         }
-        val currentLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient)
-
-        if(currentLocation != null){
-            val latLng = LatLng(currentLocation.latitude, currentLocation.longitude)
-            map.addMarker(MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)))
-            map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng,11f))
-
-        }
+        updateCurrentLocation()
     }
 
     override fun onConnectionSuspended(p0: Int) {
     }
+
+    override fun updateCurrentLocation() {
+        this.currentLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient)
+        val latLng = LatLng(currentLocation.latitude, currentLocation.longitude)
+        map.addMarker(MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)))
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 11f))
+    }
+
+    override fun loadGoogleApi() {
+        googleApiClient = GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build()
+    }
+
+    override fun loadView(registers : List<RegisterTrack>) {
+        this.registers.addAll(registers)
+        recyclerView = findViewById(R.id.registers) as RecyclerView
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        this.registerAdapter = RegisterAdapter(this.registers,routePresenter)
+        recyclerView.adapter = registerAdapter
+        recyclerView.setHasFixedSize(true)
+
+        val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
+        mapFragment.getMapAsync(this)
+    }
+
+    override fun refresh(registers: List<RegisterTrack>) {
+        map.clear()
+        registerAdapter.refresh(registers)
+        updateCurrentLocation()
+    }
+
 
 }

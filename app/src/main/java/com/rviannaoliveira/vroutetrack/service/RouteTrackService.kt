@@ -1,4 +1,4 @@
-package com.rviannaoliveira.vroutetrack
+package com.rviannaoliveira.vroutetrack.service
 
 import android.app.Service
 import android.content.Intent
@@ -11,6 +11,9 @@ import com.google.android.gms.location.LocationListener
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.LatLng
+import com.rviannaoliveira.vroutetrack.data.DataManager
+import com.rviannaoliveira.vroutetrack.model.RegisterTrack
+import com.rviannaoliveira.vroutetrack.util.RouteUtil
 
 
 /**
@@ -63,13 +66,9 @@ class RouteTrackService : Service(), GoogleApiClient.ConnectionCallbacks, Google
         startLocationUpdates()
         lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApi)
 
-        val register = RegisterTrack()
-        register.latitude = lastLocation.latitude
-        register.longitude = lastLocation.longitude
-        register.timeStamp = System.currentTimeMillis()
-        register.address = RegisterUtil.getAddressLabel(this, LatLng(lastLocation.latitude,lastLocation.longitude))
-        RepositoryRealm.insert(register)
+        insertRegister(lastLocation)
     }
+
 
     override fun onConnectionSuspended(p0: Int) {
     }
@@ -91,13 +90,17 @@ class RouteTrackService : Service(), GoogleApiClient.ConnectionCallbacks, Google
     override fun onLocationChanged(location: Location) {
         val suitableMeter = 20
         if (location.hasAccuracy() && location.accuracy <= suitableMeter) {
-
-            val register = RegisterTrack()
-            register.latitude = location.latitude
-            register.longitude = location.longitude
-            register.address = RegisterUtil.getAddressLabel(this, LatLng(location.latitude,location.longitude))
-            RepositoryRealm.insert(register)
+            insertRegister(location)
         }
+    }
+
+    private fun insertRegister(location: Location) {
+        val register = RegisterTrack()
+        register.latitude = location.latitude
+        register.longitude = location.longitude
+        register.timeStamp = System.currentTimeMillis()
+        register.address = RouteUtil.getAddressLabel(this, LatLng(lastLocation.latitude, lastLocation.longitude))
+        DataManager.insert(register)
     }
 }
 

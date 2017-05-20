@@ -1,7 +1,8 @@
 <resources>
     <string name="app_name">VRouteTrack</string>
     <string name="title_activity_main">VRouteTrack</string>
-    <string name="ativar">Ativar</string>
+    <string name="active">active</string>
+    <string name="refresh">refresh</string>
     <string name="route">Route:</string>
     <string name="hour_register">Hour register:</string>
 </resources>

@@ -1,4 +1,4 @@
-package com.rviannaoliveira.vroutetrack
+package com.rviannaoliveira.vroutetrack.util
 
 import android.content.Context
 import android.location.Address
@@ -10,9 +10,9 @@ import java.util.*
 /**
  * Criado por rodrigo on 18/05/17.
  */
-object RegisterUtil {
+object RouteUtil {
 
-    private val COMMA = ","
+    private val COMMA = ", "
 
     private fun getAddresses(context: Context?, latLng: LatLng?): List<Address>? {
         try {
