@@ -5,6 +5,7 @@ import android.content.Intent
 import android.location.Location
 import android.os.Bundle
 import android.os.IBinder
+import android.util.Log
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.LocationListener
@@ -21,7 +22,7 @@ import com.rviannaoliveira.vroutetrack.util.RouteUtil
  */
 class RouteTrackService : Service(), GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
     private lateinit var googleApi: GoogleApiClient
-    private lateinit var lastLocation: Location
+    private var lastLocation: Location? = null
     private lateinit var locationRequest: LocationRequest
     private val UPDATE_INTERVAL_IN_MILLISECONDS: Long = 10 * 1000 * 60
     private val FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS = UPDATE_INTERVAL_IN_MILLISECONDS / 2
@@ -45,17 +46,12 @@ class RouteTrackService : Service(), GoogleApiClient.ConnectionCallbacks, Google
 
     override fun stopService(name: Intent?): Boolean {
         if (googleApi.isConnected) {
-            stopLocationUpdates()
+            LocationServices.FusedLocationApi.removeLocationUpdates(googleApi, this)
             googleApi.disconnect()
         }
         return super.stopService(name)
     }
 
-
-
-    fun stopLocationUpdates() {
-        LocationServices.FusedLocationApi.removeLocationUpdates(googleApi, this)
-    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -63,20 +59,13 @@ class RouteTrackService : Service(), GoogleApiClient.ConnectionCallbacks, Google
     }
 
     override fun onConnected(p0: Bundle?) {
-        startLocationUpdates()
-        lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApi)
-
-        insertRegister(lastLocation)
+        if (googleApi.isConnected) {
+            LocationServices.FusedLocationApi.requestLocationUpdates(googleApi, locationRequest, this)
+        }
     }
 
 
     override fun onConnectionSuspended(p0: Int) {
-    }
-
-    private fun startLocationUpdates() {
-        if (googleApi.isConnected) {
-            LocationServices.FusedLocationApi.requestLocationUpdates(googleApi, locationRequest, this)
-        }
     }
 
     private fun createLocationRequest() {
@@ -84,13 +73,14 @@ class RouteTrackService : Service(), GoogleApiClient.ConnectionCallbacks, Google
         locationRequest.interval = UPDATE_INTERVAL_IN_MILLISECONDS
         locationRequest.fastestInterval = FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS
         locationRequest.smallestDisplacement = DISPLACEMENT_DISTANCE
-        locationRequest.priority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
+        locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
     }
 
     override fun onLocationChanged(location: Location) {
-        val suitableMeter = 20
-        if (location.hasAccuracy() && location.accuracy <= suitableMeter) {
+        if (lastLocation == null || location.distanceTo(lastLocation) > 50 ) {
             insertRegister(location)
+            lastLocation = location
+            Log.d(">>>>>>>>>>>>>>","onLocationChanged")
         }
     }
 
@@ -99,7 +89,7 @@ class RouteTrackService : Service(), GoogleApiClient.ConnectionCallbacks, Google
         register.latitude = location.latitude
         register.longitude = location.longitude
         register.timeStamp = System.currentTimeMillis()
-        register.address = RouteUtil.getAddressLabel(this, LatLng(lastLocation.latitude, lastLocation.longitude))
+        register.address = RouteUtil.getAddressLabel(this, LatLng(location.latitude, location.longitude))
         DataManager.insert(register)
     }
 }

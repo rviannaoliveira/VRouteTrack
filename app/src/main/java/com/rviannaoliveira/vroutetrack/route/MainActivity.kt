@@ -29,10 +29,10 @@ import com.rviannaoliveira.vroutetrack.service.RouteTrackService
 
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, RouteView{
-    private lateinit var map: GoogleMap
+    private var map: GoogleMap? = null
     private lateinit var recyclerView : RecyclerView
     private val PERMISSION = 123
-    private lateinit var googleApiClient : GoogleApiClient
+    private var googleApiClient : GoogleApiClient? = null
     private lateinit var registerAdapter : RegisterAdapter
     private var registers = ArrayList<RegisterTrack>()
     private val routePresenter : RoutePresenter = RoutePresenterImpl(this)
@@ -52,11 +52,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
     override fun onStart() {
         super.onStart()
-        googleApiClient.connect()
+        googleApiClient?.connect()
     }
 
     override fun onStop() {
-        googleApiClient.disconnect()
+        googleApiClient?.disconnect()
         super.onStop()
     }
 
@@ -78,10 +78,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
         map = googleMap
 
         registers.forEach({ item ->
-            map.addMarker(MarkerOptions().position(LatLng(item.latitude!!, item.longitude!!)))
+            map?.addMarker(MarkerOptions().position(LatLng(item.latitude!!, item.longitude!!)))
         })
         if(registers.isNotEmpty()){
-            map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(registers.last().latitude!!, registers.last().longitude!!),11f))
+            map?.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(registers.last().latitude!!, registers.last().longitude!!),11f))
         }
     }
 
@@ -110,10 +110,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
     }
 
     override fun updateCurrentLocation() {
-        this.currentLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient)
-        val latLng = LatLng(currentLocation.latitude, currentLocation.longitude)
-        map.addMarker(MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)))
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 11f))
+        if(googleApiClient != null){
+            this.currentLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient)
+            val latLng = LatLng(currentLocation.latitude, currentLocation.longitude)
+            map?.addMarker(MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)))
+            map?.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 11f))
+        }
     }
 
     override fun loadGoogleApi() {
@@ -137,7 +139,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
     }
 
     override fun refresh(registers: List<RegisterTrack>) {
-        map.clear()
+        map?.clear()
         registerAdapter.refresh(registers)
         updateCurrentLocation()
     }
