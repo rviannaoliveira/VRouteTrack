@@ -1,10 +1,13 @@
 package com.rviannaoliveira.vroutetrack.service
 
+import android.Manifest
 import android.app.Service
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
 import android.os.IBinder
+import android.support.v4.app.ActivityCompat
 import android.util.Log
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
@@ -24,7 +27,7 @@ class RouteTrackService : Service(), GoogleApiClient.ConnectionCallbacks, Google
     private lateinit var googleApi: GoogleApiClient
     private var lastLocation: Location? = null
     private lateinit var locationRequest: LocationRequest
-    private val UPDATE_INTERVAL_IN_MILLISECONDS: Long = 10 * 1000 * 60
+    private val UPDATE_INTERVAL_IN_MILLISECONDS: Long = 5 * 1000 * 60
     private val FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS = UPDATE_INTERVAL_IN_MILLISECONDS / 2
     private val DISPLACEMENT_DISTANCE = 100f
 
@@ -60,6 +63,11 @@ class RouteTrackService : Service(), GoogleApiClient.ConnectionCallbacks, Google
 
     override fun onConnected(p0: Bundle?) {
         if (googleApi.isConnected) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission
+                    .ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat
+                    .checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                return
+            }
             LocationServices.FusedLocationApi.requestLocationUpdates(googleApi, locationRequest, this)
         }
     }

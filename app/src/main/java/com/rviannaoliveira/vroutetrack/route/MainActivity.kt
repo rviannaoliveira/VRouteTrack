@@ -76,13 +76,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
-
-        registers.forEach({ item ->
-            map?.addMarker(MarkerOptions().position(LatLng(item.latitude!!, item.longitude!!)))
-        })
-        if(registers.isNotEmpty()){
-            map?.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(registers.last().latitude!!, registers.last().longitude!!),11f))
-        }
+        plotMarkers()
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -111,6 +105,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
     override fun updateCurrentLocation() {
         if(googleApiClient != null){
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission
+                    .ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat
+                    .checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                return
+            }
             this.currentLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient)
             val latLng = LatLng(currentLocation.latitude, currentLocation.longitude)
             map?.addMarker(MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)))
@@ -142,6 +141,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
         map?.clear()
         registerAdapter.refresh(registers)
         updateCurrentLocation()
+        plotMarkers()
+    }
+
+    private fun plotMarkers() {
+        registers.forEach({ item ->
+            map?.addMarker(MarkerOptions().position(LatLng(item.latitude!!, item.longitude!!)))
+        })
+        if (registers.isNotEmpty()) {
+            map?.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(registers.last().latitude!!, registers.last().longitude!!), 11f))
+        }
     }
 
 
