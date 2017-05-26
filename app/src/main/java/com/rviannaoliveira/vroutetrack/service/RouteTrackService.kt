@@ -8,7 +8,6 @@ import android.location.Location
 import android.os.Bundle
 import android.os.IBinder
 import android.support.v4.app.ActivityCompat
-import android.util.Log
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.LocationListener
@@ -81,14 +80,13 @@ class RouteTrackService : Service(), GoogleApiClient.ConnectionCallbacks, Google
         locationRequest.interval = UPDATE_INTERVAL_IN_MILLISECONDS
         locationRequest.fastestInterval = FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS
         locationRequest.smallestDisplacement = DISPLACEMENT_DISTANCE
-        locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        locationRequest.priority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
     }
 
     override fun onLocationChanged(location: Location) {
         if (lastLocation == null || location.distanceTo(lastLocation) > 50 ) {
             insertRegister(location)
             lastLocation = location
-            Log.d(">>>>>>>>>>>>>>","onLocationChanged")
         }
     }
 
