@@ -3,10 +3,10 @@
 Projeto para monitar por onde o usuario tem passado
 
 ## **Features**
-*Rxjava - http://reactivex.io/
-*Room - https://developer.android.com/topic/libraries/architecture/room.html
-*Kotlin - https://kotlinlang.org/
-*play services maps - https://developers.google.com/maps/documentation/android-api/map?hl=pt-br
+* Rxjava -> http://reactivex.io/
+* Room -> https://developer.android.com/topic/libraries/architecture/room.html
+* Kotlin -> https://kotlinlang.org/
+* play services maps -> https://developers.google.com/maps/documentation/android-api/map?hl=pt-br
 
 ## **License**
 
