@@ -1,7 +1,7 @@
 # **VRouteTrack**
 Proof of Concept to monitoring where the user was passing
 
-## **Architeture and Libraries **
+## **Architeture and Libraries**
 * Rxjava -> http://reactivex.io/
 * Room -> https://developer.android.com/topic/libraries/architecture/room.html
 * Kotlin -> https://kotlinlang.org/
