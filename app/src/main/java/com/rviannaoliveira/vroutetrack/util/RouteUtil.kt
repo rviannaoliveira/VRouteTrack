@@ -19,10 +19,8 @@ object RouteUtil {
             if (latLng == null || context == null) {
                 return null
             }
-            val latitude = java.lang.Double.parseDouble(latLng.latitude.toString())
-            val longitude = java.lang.Double.parseDouble(latLng.longitude.toString())
             val geo = Geocoder(context.applicationContext, Locale.getDefault())
-            return geo.getFromLocation(latitude, longitude, 1)
+            return geo.getFromLocation(latLng.latitude, latLng.longitude, 1)
         } catch (e: IOException) {
             e.printStackTrace()
         }
